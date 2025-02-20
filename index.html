@@ -1,0 +1,1021 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hesaplayıcı</title>
+    <style>
+        :root {
+            /* Ana renkler */
+            --ios-bg: #f0f2f5;
+            --ios-card: #ffffff;
+            --ios-primary: #5856D6;
+            --ios-secondary: #FF2D55;
+            --ios-success: #34C759;
+            --ios-accent1: #FF9500;
+            --ios-accent2: #AF52DE;
+            --ios-accent3: #5AC8FA;
+            --ios-text: #1c1c1e;
+            --ios-text-secondary: #6c6c6e;
+            --ios-border: #e5e5ea;
+            
+            /* Gradient renkler */
+            --gradient-1: linear-gradient(135deg, #5856D6, #AF52DE);
+            --gradient-2: linear-gradient(135deg, #FF2D55, #FF9500);
+            --gradient-3: linear-gradient(135deg, #34C759, #5AC8FA);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--ios-bg);
+            min-height: 100vh;
+            color: var(--ios-text);
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            background: var(--ios-bg);
+            padding: 4px;
+            border-radius: 16px;
+        }
+        
+        .tabs button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 12px;
+            background: transparent;
+            color: var(--ios-text-secondary);
+            font-weight: 600;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .tabs button.active {
+            background: var(--gradient-1);
+            color: white;
+            box-shadow: 0 4px 15px rgba(88, 86, 214, 0.3);
+        }
+        
+        .calculator {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 30px;
+            border-radius: 20px;
+            background: var(--ios-card);
+            box-shadow: 0 10px 30px rgba(88, 86, 214, 0.1);
+            border: 1px solid rgba(88, 86, 214, 0.1);
+        }
+        
+        .calculator:hover {
+            transform: translateY(-5px);
+        }
+        
+        .input-container {
+            margin: 0 0 20px 0;
+            padding: 0;
+            width: 100%;
+        }
+        
+        input, select {
+            width: 100%;
+            box-sizing: border-box;  /* padding ve border'ı width hesaplamasına dahil eder */
+            padding: 16px;
+            border: 2px solid var(--ios-border);
+            border-radius: 12px;
+            font-size: 16px;
+            background: var(--ios-bg);
+            color: var(--ios-text);
+            margin-bottom: 0;
+            -webkit-appearance: none;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus, select:focus {
+            border-color: var(--ios-primary);
+            background: var(--ios-card);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(88, 86, 214, 0.1);
+        }
+        
+        .result {
+            background: var(--ios-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .result::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--gradient-1);
+        }
+        
+        .result p {
+            padding: 16px 0;
+            margin: 0;
+            border-bottom: 1px solid var(--ios-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 15px;
+            color: var(--ios-text-secondary);
+        }
+        
+        .result p span {
+            color: var(--ios-text);
+            font-weight: 600;
+        }
+        
+        .result .net {
+            background: linear-gradient(135deg, var(--ios-success), var(--ios-accent3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+            font-size: 18px;
+            border: none;
+        }
+        
+        .volumetric-toggle button, .info-toggle button {
+            background: none;
+            border: none;
+            color: var(--ios-primary);
+            padding: 12px 0;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .volumetric-toggle button:hover, .info-toggle button:hover {
+            color: var(--ios-accent2);
+            transform: translateX(5px);
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid currentColor;
+            border-radius: 50%;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        .volumetric-weight, .region-info {
+            animation: slideDown 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--ios-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 20px;
+            border: 1px solid rgba(88, 86, 214, 0.1);
+        }
+        
+        .weight-in-use {
+            animation: colorPulse 2s infinite;
+        }
+        
+        @keyframes colorPulse {
+            0% { background: var(--ios-bg); }
+            50% { background: rgba(88, 86, 214, 0.1); }
+            100% { background: var(--ios-bg); }
+        }
+        
+        .exchange-info {
+            background: var(--ios-bg);
+            border-radius: 16px;
+            padding: 24px;
+            margin-top: 30px;
+            font-size: 15px;
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+        
+        .exchange-rates strong {
+            background: var(--gradient-3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 700;
+        }
+        
+        table {
+            width: 100%;
+            border-spacing: 0;
+            margin-top: 16px;
+            font-size: 14px;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: var(--gradient-1);
+            color: white;
+            font-weight: 600;
+            padding: 14px;
+            text-align: left;
+        }
+        
+        td {
+            padding: 14px;
+            border-bottom: 1px solid var(--ios-border);
+            color: var(--ios-text-secondary);
+        }
+        
+        tr:hover td {
+            background: rgba(88, 86, 214, 0.05);
+        }
+        
+        .dimensions {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+        
+        .dimensions .input-container {
+            margin: 0;
+        }
+        
+        .dimensions input {
+            width: calc(100% - 32px);
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 10px;
+            color: var(--ios-primary);
+            font-size: 14px;
+            font-weight: 600;
+            padding: 0;
+        }
+        
+        h2 {
+            background: var(--gradient-1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 24px;
+        }
+        
+        .weight-info {
+            display: block;
+            margin-top: 8px;
+            color: var(--ios-text-secondary);
+            font-size: 13px;
+            padding-left: 2px;
+        }
+        
+        .weight-section {
+            margin: 0;
+            padding: 0;
+        }
+        
+        .actual-weight {
+            margin: 0 0 20px 0;
+            padding: 0;
+        }
+        
+        .volumetric-toggle {
+            margin: 0 0 20px 0;
+            padding: 0;
+        }
+        
+        .volumetric-weight {
+            padding: 24px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 576px) {
+            body {
+                padding: 16px;
+            }
+            
+            .calculator {
+                padding: 24px;
+            }
+            
+            input, select {
+                width: calc(100% - 32px);
+            }
+            
+            .dimensions {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .result {
+                padding: 20px;
+            }
+        }
+
+        /* Tema değiştirme butonu için stil */
+        .theme-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 25px;
+            background: var(--gradient-1);
+            border: none;
+            box-shadow: 0 4px 15px rgba(88, 86, 214, 0.3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: transform 0.3s ease;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-toggle svg {
+            width: 24px;
+            height: 24px;
+            fill: white;
+        }
+
+        @media (max-width: 576px) {
+            .theme-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 45px;
+                height: 45px;
+            }
+
+            .theme-toggle svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
+
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .calculate-btn {
+            width: 100%;
+            padding: 14px 20px;
+            margin-top: 16px;
+            border: none;
+            border-radius: 12px;
+            background: var(--gradient-1);
+            color: white;
+            font-weight: 600;
+            font-size: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .calculate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(88, 86, 214, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="tabs">
+            <button onclick="showTab('calc1')" class="active">Kazanç</button>
+            <button onclick="showTab('calc2')">Kargo</button>
+        </div>
+
+        <div id="calc1" class="tab-content active">
+            <h2>Etsy Kazanç Hesaplayıcı</h2>
+            <div class="input-container">
+                <label for="price">Ürün Satış Fiyatı ($)</label>
+                <input type="number" id="price" placeholder="Ürün satış fiyatını giriniz" step="0.01">
+            </div>
+            <div class="input-container">
+                <label for="cost">Ürün Maliyeti ($)</label>
+                <input type="number" id="cost" placeholder="Ürün maliyetini giriniz" step="0.01">
+            </div>
+            <div class="input-container">
+                <label for="shipping_cost">Kargo Maliyeti ($)</label>
+                <input type="number" id="shipping_cost" placeholder="Kargo maliyetini giriniz" step="0.01">
+            </div>
+            <div class="result">
+                <p>Satış Fiyatı: <span id="totalPrice">$0.00</span></p>
+                <p>Etsy Kesintisi (22%): <span id="etsyFee">$0.00</span></p>
+                <p>Ürün Maliyeti: <span id="productCost">$0.00</span></p>
+                <p>Kargo Maliyeti: <span id="shippingCost">$0.00</span></p>
+                <p class="net">Net Kazanç ($): <span id="netEarning">$0.00</span></p>
+                <p class="net">Net Kazanç (TL): <span id="netEarningTRY">0.00 TL</span></p>
+            </div>
+        </div>
+
+        <div id="calc2" class="tab-content">
+            <h2>FedEx Kargo Hesaplayıcı</h2>
+            
+            <div class="input-container">
+                <label for="packageType">Paketleme Tipi</label>
+                <select id="packageType">
+                    <option value="pak">FedEx PAK (Max 2.5 kg)</option>
+                    <option value="custom">Your Packaging (Max 15 kg)</option>
+                </select>
+            </div>
+
+            <div class="weight-section">
+                <div class="input-container">
+                    <label for="weight">Fiziksel Ağırlık (kg)</label>
+                    <input type="number" id="weight" min="0.5" step="0.5" placeholder="Kilo giriniz">
+                    <small class="weight-info">Min: 0.5 kg, Max: 15 kg</small>
+                </div>
+
+                <div class="volumetric-toggle">
+                    <button type="button" id="toggleVolumetric">
+                        <span class="icon">+</span> Hacimsel Ağırlık Hesapla
+                    </button>
+                </div>
+
+                <div class="volumetric-weight" style="display: none;">
+                    <div class="dimensions">
+                        <div class="input-container">
+                            <label for="length">En (cm)</label>
+                            <input type="number" id="length" placeholder="0" min="1">
+                        </div>
+                        <div class="input-container">
+                            <label for="width">Boy (cm)</label>
+                            <input type="number" id="width" placeholder="0" min="1">
+                        </div>
+                        <div class="input-container">
+                            <label for="height">Yükseklik (cm)</label>
+                            <input type="number" id="height" placeholder="0" min="1">
+                        </div>
+                    </div>
+                    <button type="button" id="calculateVolumetric" class="calculate-btn">Hacimsel Ağırlığı Hesapla</button>
+                </div>
+            </div>
+
+            <div class="input-container">
+                <label for="region">Ülke Seçin</label>
+                <select id="region">
+                    <option value="">Ülke seçiniz...</option>
+                    <option value="6">ABD</option>
+                    <option value="9">BAE (Birleşik Arap Emirlikleri)</option>
+                    <option value="2">Almanya</option>
+                    <option value="13">Avustralya</option>
+                    <option value="2">Avusturya</option>
+                    <option value="2">Belçika</option>
+                    <option value="10">Brezilya</option>
+                    <option value="1">Bulgaristan</option>
+                    <option value="1">Çek Cumhuriyeti</option>
+                    <option value="12">Çin</option>
+                    <option value="4">Danimarka</option>
+                    <option value="4">Finlandiya</option>
+                    <option value="2">Fransa</option>
+                    <option value="8">Güney Kore</option>
+                    <option value="9">Hindistan</option>
+                    <option value="12">Hong Kong</option>
+                    <option value="2">Hollanda</option>
+                    <option value="3">İngiltere</option>
+                    <option value="4">İrlanda</option>
+                    <option value="3">İspanya</option>
+                    <option value="9">İsrail</option>
+                    <option value="4">İsveç</option>
+                    <option value="3">İsviçre</option>
+                    <option value="2">İtalya</option>
+                    <option value="14">Japonya</option>
+                    <option value="7">Kanada</option>
+                    <option value="11">Kazakistan</option>
+                    <option value="5">Kıbrıs</option>
+                    <option value="2">Lüksemburg</option>
+                    <option value="8">Malezya</option>
+                    <option value="4">Norveç</option>
+                    <option value="11">Özbekistan</option>
+                    <option value="3">Portekiz</option>
+                    <option value="1">Romanya</option>
+                    <option value="4">Rusya</option>
+                    <option value="5">Sırbistan</option>
+                    <option value="14">Singapur</option>
+                    <option value="1">Slovakya</option>
+                    <option value="1">Slovenya</option>
+                    <option value="9">Suudi Arabistan</option>
+                    <option value="8">Tayland</option>
+                    <option value="8">Tayvan</option>
+                    <option value="5">Ukrayna</option>
+                    <option value="8">Vietnam</option>
+                    <option value="1">Yunanistan</option>
+                </select>
+            </div>
+
+            <div class="result">
+                <p>Navlun: <span id="navlun">€0.00</span></p>
+                <p>FSI: <span id="fsi">€0.00</span></p>
+                <p>Toplam Ücret (EUR): <span id="totalEUR">€0.00</span></p>
+                <p>Toplam Ücret (USD): <span id="totalUSD">$0.00</span></p>
+                <p class="net">Toplam Ücret (TL): <span id="totalTRY">0.00 TL</span></p>
+            </div>
+
+            <div class="info-toggle">
+                <button type="button" id="toggleInfo">
+                    <span class="icon">+</span> Bölge ve Ücret Bilgileri
+                </button>
+            </div>
+
+            <div class="region-info" style="display: none;">
+                <h3>Bölge Bilgileri ve Ücretler</h3>
+                <div class="rates-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Bölge</th>
+                                <th>1 kg (€)</th>
+                                <th>1.5 kg (€)</th>
+                                <th>2 kg (€)</th>
+                                <th>Örnek Ülkeler</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Bölge 1</td>
+                                <td>14.71</td>
+                                <td>15.80</td>
+                                <td>16.93</td>
+                                <td>Yunanistan, Bulgaristan, Romanya, Macaristan</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 2</td>
+                                <td>15.17</td>
+                                <td>16.28</td>
+                                <td>17.42</td>
+                                <td>Almanya, Fransa, İtalya, Hollanda</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 3</td>
+                                <td>18.19</td>
+                                <td>19.70</td>
+                                <td>21.21</td>
+                                <td>İngiltere, İspanya, İsviçre, Portekiz</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 4</td>
+                                <td>15.47</td>
+                                <td>16.62</td>
+                                <td>17.80</td>
+                                <td>Danimarka, İsveç, Norveç, Finlandiya</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 5</td>
+                                <td>15.53</td>
+                                <td>16.70</td>
+                                <td>17.85</td>
+                                <td>Ukrayna, Sırbistan, Hırvatistan</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 6</td>
+                                <td>15.64</td>
+                                <td>16.80</td>
+                                <td>18.00</td>
+                                <td>ABD</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 7</td>
+                                <td>16.42</td>
+                                <td>17.65</td>
+                                <td>18.91</td>
+                                <td>Kanada</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 8</td>
+                                <td>25.54</td>
+                                <td>26.47</td>
+                                <td>27.42</td>
+                                <td>Güney Kore, Malezya, Tayland</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 9</td>
+                                <td>27.31</td>
+                                <td>28.58</td>
+                                <td>29.89</td>
+                                <td>BAE, Hindistan, İsrail, Suudi Arabistan</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 10</td>
+                                <td>28.22</td>
+                                <td>29.69</td>
+                                <td>31.15</td>
+                                <td>Brezilya, Arjantin, Şili</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 11</td>
+                                <td>29.06</td>
+                                <td>30.59</td>
+                                <td>32.11</td>
+                                <td>Kazakistan, Özbekistan</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 12</td>
+                                <td>24.69</td>
+                                <td>25.56</td>
+                                <td>26.45</td>
+                                <td>Çin, Hong Kong</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 13</td>
+                                <td>38.61</td>
+                                <td>43.39</td>
+                                <td>48.16</td>
+                                <td>Avustralya</td>
+                            </tr>
+                            <tr>
+                                <td>Bölge 14</td>
+                                <td>25.54</td>
+                                <td>26.47</td>
+                                <td>27.42</td>
+                                <td>Japonya, Singapur</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="exchange-info">
+            <div class="exchange-rates">
+                <span>USD/TRY: <strong id="usdRate">0.00</strong></span>
+                <span>EUR/TRY: <strong id="eurRate">0.00</strong></span>
+            </div>
+            <div class="update-time">
+                Son Güncelleme: <span id="lastUpdate">-</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tema değiştirme butonu -->
+    <button class="theme-toggle" onclick="switchTheme()" aria-label="Koyu moda geç">
+        <svg viewBox="0 0 24 24">
+            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+        </svg>
+    </button>
+
+    <script>
+        // Kur bilgilerini localStorage'dan al veya varsayılan değerleri kullan
+        let exchangeRate = parseFloat(localStorage.getItem('usdRate')) || 36.30;
+        let eurRate = parseFloat(localStorage.getItem('eurRate')) || 37.80;
+        let isLiveRate = false; // Canlı kur kontrolü için yeni değişken
+
+        // Kurları localStorage'a kaydet
+        function saveExchangeRates() {
+            localStorage.setItem('usdRate', exchangeRate.toString());
+            localStorage.setItem('eurRate', eurRate.toString());
+            localStorage.setItem('lastUpdate', new Date().toISOString());
+        }
+
+        // Kur ve zaman bilgisini güncelleme fonksiyonu
+        function updateExchangeInfo() {
+            // Kurları göster
+            document.getElementById('usdRate').textContent = exchangeRate.toFixed(2);
+            document.getElementById('eurRate').textContent = eurRate.toFixed(2);
+            
+            // Son güncelleme zamanını göster
+            const lastUpdate = localStorage.getItem('lastUpdate') 
+                ? new Date(localStorage.getItem('lastUpdate'))
+                : new Date();
+
+            const options = { 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit'
+            };
+            
+            const updateStatus = isLiveRate 
+                ? 'Canlı Veri' 
+                : 'Varsayılan Değer';
+            
+            document.getElementById('lastUpdate').textContent = 
+                `${lastUpdate.toLocaleDateString('tr-TR', options)} (${updateStatus})`;
+        }
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // Eğer localStorage'da kur bilgisi yoksa varsayılan değerleri kaydet
+            if (!localStorage.getItem('usdRate') || !localStorage.getItem('eurRate')) {
+                saveExchangeRates();
+            }
+            
+            updateWeightInput();
+            updateExchangeInfo();
+        });
+
+        // Kurları güncelleme fonksiyonu (admin panelinden çağrılacak)
+        function updateRates(newUsdRate, newEurRate) {
+            exchangeRate = parseFloat(newUsdRate);
+            eurRate = parseFloat(newEurRate);
+            saveExchangeRates();
+            updateExchangeInfo();
+            // Eğer hesaplama yapılmışsa yeniden hesapla
+            if (document.getElementById('weight').value) {
+                calculateShipping();
+            }
+        }
+
+        const etsyFeeRate = 0.22;
+
+        // Ücret matrisleri
+        const rates = {
+            pak: [
+                [13.32, 13.72, 16.72, 14.00, 14.03, 14.16, 14.87, 24.60, 26.01, 26.77, 27.57, 23.84, 33.82, 24.60],
+                [14.71, 15.17, 18.19, 15.47, 15.53, 15.64, 16.42, 25.54, 27.31, 28.22, 29.06, 24.69, 38.61, 25.54],
+                [15.80, 16.28, 19.70, 16.62, 16.70, 16.80, 17.65, 26.47, 28.58, 29.69, 30.59, 25.56, 43.39, 26.47],
+                [16.93, 17.42, 21.21, 17.80, 17.85, 18.00, 18.91, 27.42, 29.89, 31.15, 32.11, 26.45, 48.16, 27.42],
+                [18.04, 18.60, 22.68, 18.96, 19.04, 19.17, 20.11, 28.34, 31.19, 32.64, 33.61, 27.32, 52.95, 28.34]
+            ],
+            custom: [
+                [15.99, 16.48, 18.73, 17.48, 17.64, 20.00, 21.00, 28.26, 30.60, 31.97, 32.94, 26.30, 35.39, 28.26],
+                [16.73, 17.25, 20.01, 18.29, 18.46, 20.56, 21.57, 28.80, 31.38, 32.89, 33.86, 26.89, 40.62, 28.80],
+                [17.49, 18.02, 21.28, 19.09, 19.27, 21.11, 22.17, 29.35, 32.17, 33.78, 34.78, 27.49, 45.87, 29.35],
+                [18.22, 18.79, 22.56, 19.93, 20.11, 21.71, 22.79, 29.88, 32.95, 34.66, 35.71, 28.11, 51.15, 29.88],
+                [18.98, 19.55, 23.84, 20.73, 20.94, 22.28, 23.38, 30.42, 33.74, 35.55, 36.62, 28.70, 56.41, 30.42],
+                [19.72, 20.32, 25.10, 21.54, 21.77, 22.85, 23.98, 30.95, 34.53, 36.44, 37.52, 29.30, 61.66, 30.95],
+                [20.47, 21.08, 26.38, 22.36, 22.59, 23.40, 24.58, 31.49, 35.31, 37.34, 38.46, 29.89, 66.91, 31.49],
+                [21.22, 21.86, 27.67, 23.17, 23.40, 23.98, 25.17, 32.03, 36.09, 38.24, 39.38, 30.49, 72.17, 32.03],
+                [21.98, 22.63, 28.95, 23.99, 24.23, 24.55, 25.78, 32.57, 36.88, 39.11, 40.28, 31.10, 77.44, 32.57],
+                [22.70, 23.40, 30.16, 24.81, 25.06, 25.07, 26.32, 33.05, 37.69, 39.99, 41.18, 31.67, 82.70, 33.05],
+                [23.46, 24.16, 31.89, 25.62, 25.86, 27.04, 28.39, 33.80, 38.77, 41.25, 42.48, 32.43, 87.95, 33.80],
+                [26.02, 26.82, 33.60, 28.44, 28.70, 28.97, 30.42, 34.56, 39.82, 42.50, 43.78, 33.19, 93.21, 34.56],
+                [27.80, 28.67, 35.31, 30.39, 30.66, 30.92, 32.46, 35.29, 40.89, 43.77, 45.07, 33.94, 98.46, 35.29],
+                [29.61, 30.52, 37.02, 32.36, 32.66, 32.89, 34.53, 36.04, 41.99, 45.02, 46.38, 34.70, 103.74, 36.04],
+                [31.40, 32.38, 38.77, 34.30, 34.63, 34.83, 36.56, 36.79, 43.06, 46.30, 47.67, 35.47, 108.99, 36.79],
+                [33.21, 34.24, 40.48, 36.28, 36.63, 36.78, 38.62, 37.54, 44.14, 47.55, 48.98, 36.23, 114.25, 37.54],
+                [34.99, 36.08, 42.18, 38.25, 38.59, 38.74, 40.68, 38.30, 45.21, 48.79, 50.27, 36.97, 119.50, 38.30],
+                [36.79, 37.95, 43.90, 40.23, 40.58, 40.71, 42.71, 39.05, 46.30, 50.06, 51.57, 37.73, 124.76, 39.05],
+                [38.67, 39.87, 45.61, 42.27, 42.48, 42.64, 44.77, 39.78, 47.36, 51.34, 52.88, 38.49, 130.02, 39.78],
+                [40.55, 41.81, 47.33, 44.32, 44.53, 44.61, 46.84, 40.54, 48.44, 52.59, 54.17, 39.23, 135.31, 40.54],
+                [44.08, 45.48, 51.89, 49.24, 49.69, 54.26, 56.96, 51.42, 55.26, 66.57, 68.56, 46.29, 149.30, 51.42],
+                [47.56, 49.17, 56.44, 54.19, 54.83, 63.92, 67.10, 62.31, 62.07, 80.56, 82.97, 53.30, 163.29, 62.31],
+                [51.06, 52.83, 61.00, 59.13, 59.98, 73.55, 77.23, 73.20, 68.87, 94.52, 97.35, 60.33, 177.28, 73.20],
+                [54.57, 56.51, 65.52, 64.07, 65.15, 83.23, 87.39, 84.09, 75.67, 108.50, 111.77, 67.36, 191.27, 84.09],
+                [58.09, 60.17, 70.08, 69.00, 70.28, 92.87, 97.52, 94.98, 82.50, 122.48, 126.13, 74.37, 205.28, 94.98]
+            ]
+        };
+
+        async function getExchangeRates() {
+            try {
+                const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+                const data = await response.json();
+                exchangeRate = data.rates.TRY;
+                eurRate = data.rates.TRY / data.rates.EUR;
+                isLiveRate = true;
+                calculateEarnings();
+                calculateShipping();
+            } catch (error) {
+                console.error('Döviz kuru alınamadı:', error);
+                exchangeRate = 36.30;
+                eurRate = 37.80;
+                isLiveRate = false;
+            }
+            updateExchangeInfo();
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.tabs button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function calculateEarnings() {
+            const price = parseFloat(document.getElementById('price').value) || 0;
+            const cost = parseFloat(document.getElementById('cost').value) || 0;
+            const shipping = parseFloat(document.getElementById('shipping_cost').value) || 0;
+            
+            const etsyFee = price * etsyFeeRate;
+            const netEarning = price - etsyFee - cost - shipping;
+            const netEarningTRY = netEarning * exchangeRate;
+
+            document.getElementById('totalPrice').textContent = `$${price.toFixed(2)}`;
+            document.getElementById('etsyFee').textContent = `$${etsyFee.toFixed(2)}`;
+            document.getElementById('productCost').textContent = `$${cost.toFixed(2)}`;
+            document.getElementById('shippingCost').textContent = `$${shipping.toFixed(2)}`;
+            document.getElementById('netEarning').textContent = `$${netEarning.toFixed(2)}`;
+            document.getElementById('netEarningTRY').textContent = `${netEarningTRY.toFixed(2)} TL`;
+        }
+
+        function getWeightIndex(weight, packageType) {
+            if (packageType === 'pak') {
+                return Math.min(Math.floor(weight * 2), 4);
+            } else {
+                if (weight <= 5) {
+                    return Math.round((weight - 0.5) * 2);
+                } else if (weight <= 10) {
+                    return Math.round((weight - 5) * 2) + 9;
+                } else {
+                    return Math.round((weight - 10)) + 19;
+                }
+            }
+        }
+
+        function calculateVolumetricWeight() {
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+
+            if (length && width && height) {
+                const volumetricWeight = (length * width * height) / 5000;
+                document.getElementById('volumetricResult').textContent = volumetricWeight.toFixed(2);
+                return volumetricWeight;
+            }
+            return 0;
+        }
+
+        function validateWeight(input) {
+            const packageType = document.getElementById('packageType').value;
+            const maxWeight = packageType === 'pak' ? 2.5 : 15;
+            
+            // Hacimsel ağırlığı hesapla
+            const volumetricWeight = calculateVolumetricWeight();
+            
+            // Boş değer kontrolü
+            if (input.value === '') {
+                calculateShipping();
+                return;
+            }
+
+            let value = parseFloat(input.value);
+            
+            // Fiziksel ve hacimsel ağırlıktan büyük olanı al
+            value = Math.max(value, volumetricWeight);
+            
+            // Min-max kontrolleri
+            if (value < 0.5) value = 0.5;
+            if (value > maxWeight) value = maxWeight;
+            
+            // Paket tipine göre adım kontrolü
+            if (packageType === 'pak') {
+                value = Math.round(value * 2) / 2;
+            } else {
+                if (value <= 10) {
+                    value = Math.round(value * 2) / 2;
+                } else {
+                    value = Math.round(value);
+                }
+            }
+            
+            input.value = value;
+            calculateShipping();
+
+            // Görsel geri bildirim
+            const actualWeightDiv = document.querySelector('.actual-weight');
+            const volumetricWeightDiv = document.querySelector('.volumetric-weight');
+            
+            if (volumetricWeight > parseFloat(input.value)) {
+                volumetricWeightDiv.classList.add('weight-in-use');
+                actualWeightDiv.classList.remove('weight-in-use');
+            } else {
+                actualWeightDiv.classList.add('weight-in-use');
+                volumetricWeightDiv.classList.remove('weight-in-use');
+            }
+        }
+
+        function calculateShipping() {
+            const packageType = document.getElementById('packageType').value;
+            const region = parseInt(document.getElementById('region').value) - 1;
+            const weight = parseFloat(document.getElementById('weight').value);
+
+            if (isNaN(region) || isNaN(weight) || weight === 0 || document.getElementById('weight').value === '') {
+                document.getElementById('navlun').textContent = '€0.00';
+                document.getElementById('fsi').textContent = '€0.00';
+                document.getElementById('totalEUR').textContent = '€0.00';
+                document.getElementById('totalUSD').textContent = '$0.00';
+                document.getElementById('totalTRY').textContent = '0.00 TL';
+                return;
+            }
+
+            const weightIndex = getWeightIndex(weight, packageType);
+            const price = rates[packageType][weightIndex][region];
+
+            const fsi = price * 0.35;
+            const totalEUR = price * 1.35;
+            const totalTRY = totalEUR * eurRate;
+            const totalUSD = totalTRY / exchangeRate;
+
+            document.getElementById('navlun').textContent = `€${price.toFixed(2)}`;
+            document.getElementById('fsi').textContent = `€${fsi.toFixed(2)}`;
+            document.getElementById('totalEUR').textContent = `€${totalEUR.toFixed(2)}`;
+            document.getElementById('totalUSD').textContent = `$${totalUSD.toFixed(2)}`;
+            document.getElementById('totalTRY').textContent = `${totalTRY.toFixed(2)} TL`;
+        }
+
+        // Event listeners
+        ['price', 'cost', 'shipping_cost'].forEach(id => {
+            document.getElementById(id).addEventListener('input', calculateEarnings);
+        });
+
+        document.getElementById('packageType').addEventListener('change', function() {
+            const weightInput = document.getElementById('weight');
+            weightInput.value = '0.5';
+            updateWeightInput();
+        });
+        document.getElementById('region').addEventListener('change', calculateShipping);
+        document.getElementById('weight').addEventListener('input', function() {
+            validateWeight(this);
+        });
+
+        // Event listeners ekle
+        ['length', 'width', 'height'].forEach(id => {
+            document.getElementById(id).addEventListener('input', function() {
+                // Otomatik hesaplama kaldırıldı
+            });
+        });
+
+        // Toggle butonu için event listener
+        document.getElementById('toggleVolumetric').addEventListener('click', function() {
+            const volumetricSection = document.querySelector('.volumetric-weight');
+            const icon = this.querySelector('.icon');
+            
+            if (volumetricSection.style.display === 'none') {
+                volumetricSection.style.display = 'block';
+                icon.textContent = '-';
+            } else {
+                volumetricSection.style.display = 'none';
+                icon.textContent = '+';
+                // Hacimsel ağırlık alanlarını temizle
+                document.getElementById('length').value = '';
+                document.getElementById('width').value = '';
+                document.getElementById('height').value = '';
+                document.getElementById('volumetricResult').textContent = '0.00';
+                // Fiziksel ağırlığa geri dön
+                validateWeight(document.getElementById('weight'));
+            }
+        });
+
+        // Bölge bilgileri toggle
+        document.getElementById('toggleInfo').addEventListener('click', function() {
+            const infoSection = document.querySelector('.region-info');
+            const icon = this.querySelector('.icon');
+            
+            if (infoSection.style.display === 'none') {
+                infoSection.style.display = 'block';
+                icon.textContent = '-';
+            } else {
+                infoSection.style.display = 'none';
+                icon.textContent = '+';
+            }
+        });
+
+        // Hesaplama butonu için event listener ekle
+        document.getElementById('calculateVolumetric').addEventListener('click', function() {
+            const length = parseFloat(document.getElementById('length').value) || 0;
+            const width = parseFloat(document.getElementById('width').value) || 0;
+            const height = parseFloat(document.getElementById('height').value) || 0;
+
+            if (length && width && height) {
+                const volumetricWeight = (length * width * height) / 5000;
+                const weightInput = document.getElementById('weight');
+                weightInput.value = volumetricWeight.toFixed(2);
+                validateWeight(weightInput);
+            }
+        });
+
+        // Sayfa yüklendiğinde
+        getExchangeRates();
+        setInterval(getExchangeRates, 3600000);
+
+        document.getElementById('region').value = "";
+        updateWeightInput();
+
+        // Tema değiştirme fonksiyonu
+        function switchTheme() {
+            window.location.href = 'koyumod_index.html';
+        }
+    </script>
+</body>
+</html>
